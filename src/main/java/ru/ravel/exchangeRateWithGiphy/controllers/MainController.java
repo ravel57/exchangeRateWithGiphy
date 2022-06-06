@@ -1,6 +1,7 @@
 package ru.ravel.exchangeRateWithGiphy.controllers;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -11,7 +12,6 @@ import ru.ravel.exchangeRateWithGiphy.services.GiphyService;
 import ru.ravel.exchangeRateWithGiphy.services.OpenExchangeRatesService;
 
 import javax.servlet.http.HttpServletResponse;
-import java.nio.file.Files;
 import java.nio.file.Path;
 
 @RestController
@@ -22,24 +22,33 @@ public class MainController {
     @Autowired
     GiphyService giphyService;
 
+    @Value("${openexchangerates.defaultcurrency}")
+    String defaultCurrency;
+
 
     @GetMapping("/")
-    public ResponseEntity<Object> rootGetMapping() {
+    public ResponseEntity<Object> getGifByDefaultCurrencyCode(HttpServletResponse response) {
+        return getGifByCurrencyCode(defaultCurrency, response);
+    }
+
+
+    @GetMapping("/currencies")
+    public ResponseEntity<Object> getCurrenciesCodes() {
         return ResponseEntity.status(HttpStatus.OK).body(ratesService.getCurrencies());
     }
 
 
-    @GetMapping(value = "/{currencyCode}",
+    @GetMapping(value = "/currencies/{currencyCode}",
             produces = MediaType.IMAGE_JPEG_VALUE)
-    public ResponseEntity<Object> currencyCode(@PathVariable String currencyCode,
-                                               HttpServletResponse response) {
+    public ResponseEntity<Object> getGifByCurrencyCode(@PathVariable String currencyCode,
+                                                       HttpServletResponse response) {
         try {
             Path imgFile = giphyService.getFile(currencyCode);
             response.setContentType(MediaType.IMAGE_JPEG_VALUE);
-            Files.copy(imgFile, response.getOutputStream());
-            imgFile.toFile().delete();
+            giphyService.uploadGif(response, imgFile);
         } catch (Exception e) {
             e.printStackTrace();
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
         return new ResponseEntity<>(HttpStatus.OK);
     }
