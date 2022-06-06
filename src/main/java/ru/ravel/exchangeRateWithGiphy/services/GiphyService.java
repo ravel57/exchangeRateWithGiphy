@@ -1,15 +1,15 @@
 package ru.ravel.exchangeRateWithGiphy.services;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.ClassPathResource;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import ru.ravel.exchangeRateWithGiphy.dto.Gif;
 
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 @Service
 public class GiphyService {
@@ -19,7 +19,10 @@ public class GiphyService {
     @Autowired
     OpenExchangeRatesService ratesService;
 
-    public ClassPathResource getClassPathResource(String currencyCode) throws IOException {
+    @Value("${imagesDirPath}")
+    String imagesDirPath;
+
+    public Path getFile(String currencyCode) throws IOException {
         String tag = ratesService.isHigherThanYesterday(currencyCode) ? "rich" : "broke";
         String token = System.getenv("giphyToken");
         Gif data = new Gif(giphyClient.getGifByTag(token, tag));
@@ -27,9 +30,11 @@ public class GiphyService {
                 "https://media".length() + 1,
                 data.getUrl().length() - "https://media".length()
         ).toString();
-        String name = String.format("images/%s.gif", data.getId());
-        saveImage(imageUrl, name);
-        return new ClassPathResource(name);
+        if (!Files.isDirectory(Paths.get(imagesDirPath)))
+            new File(imagesDirPath).mkdirs();
+        String name = String.format("%s/%s.gif", imagesDirPath, data.getId());
+        saveImage(imageUrl,name);
+        return Paths.get(name);
     }
 
 
