@@ -11,6 +11,6 @@ import java.util.LinkedHashMap;
 public interface GiphyClient {
 
     @GetMapping(value = "")
-    LinkedHashMap<Object, Object> getGifByTag(@RequestParam("api_key") String token,
-                                              @RequestParam("tag") String tag);
+    LinkedHashMap<Object, Object> getRandomGifByTag(@RequestParam("api_key") String token,
+                                                    @RequestParam("tag") String tag);
 }

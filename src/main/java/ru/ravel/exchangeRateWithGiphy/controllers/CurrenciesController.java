@@ -15,7 +15,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.nio.file.Path;
 
 @RestController
-public class MainController {
+public class CurrenciesController {
 
     @Autowired
     OpenExchangeRatesService ratesService;
@@ -26,7 +26,7 @@ public class MainController {
     String defaultCurrency;
 
 
-    @GetMapping("/")
+    @GetMapping
     public ResponseEntity<Object> getGifByDefaultCurrencyCode(HttpServletResponse response) {
         return getGifByCurrencyCode(defaultCurrency, response);
     }
@@ -44,7 +44,6 @@ public class MainController {
                                                        HttpServletResponse response) {
         try {
             Path imgFile = giphyService.getFile(currencyCode);
-            response.setContentType(MediaType.IMAGE_JPEG_VALUE);
             giphyService.uploadGif(response, imgFile);
         } catch (Exception e) {
             e.printStackTrace();

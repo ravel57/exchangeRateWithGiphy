@@ -1,18 +1,18 @@
 package ru.ravel.exchangeRateWithGiphy.enums;
 
+import lombok.Getter;
+
 public enum ChangeOfCourse {
     higher ("rich"),
     lower("broke"),
     noChange("same"),
     error("error");
 
-    private String tag;
+    @Getter
+    private  String tag;
 
     ChangeOfCourse(String code){
         this.tag = code;
     }
 
-    public String ChangeOfCourse(){
-        return tag;
-    }
 }

@@ -1,8 +1,10 @@
 package ru.ravel.exchangeRateWithGiphy.services;
 
+import feign.FeignException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ru.ravel.exchangeRateWithGiphy.clients.OpenExchangeRatesClient;
+import ru.ravel.exchangeRateWithGiphy.dto.CurrencyRate;
 import ru.ravel.exchangeRateWithGiphy.enums.ChangeOfCourse;
 
 import java.math.BigDecimal;
@@ -15,17 +17,15 @@ public class OpenExchangeRatesService {
     @Autowired
     OpenExchangeRatesClient ratesClient;
 
-    public ChangeOfCourse isHigherThanYesterday(String currencyCode) {
-        String token = System.getenv("openExchangeRatesToken");
+    static String token = System.getenv("openExchangeRatesToken");
+
+    public ChangeOfCourse getTagByCourseChange(String currencyCode) {
         currencyCode = currencyCode.toUpperCase();
         String previousDay = LocalDate.now().minusDays(1).toString();
 
         try {
-            Map<String, Object> todayRates = (Map<String, Object>) ratesClient.getLatestCurrency(token).get("rates");
-            BigDecimal todayRate = new BigDecimal(todayRates.get(currencyCode).toString());
-
-            Map<String, Object> yesterdayRates = (Map<String, Object>) ratesClient.getCurrencyByDate(token, previousDay).get("rates");
-            BigDecimal yesterdayRate = new BigDecimal(yesterdayRates.get(currencyCode).toString());
+            BigDecimal todayRate = CurrencyRate.getRate(ratesClient.getLatestCurrency(token), currencyCode);
+            BigDecimal yesterdayRate = CurrencyRate.getRate(ratesClient.getCurrencyByDate(token, previousDay), currencyCode);
 
             if (todayRate.compareTo(yesterdayRate) > 0)
                 return ChangeOfCourse.higher;
@@ -33,14 +33,15 @@ public class OpenExchangeRatesService {
                 return ChangeOfCourse.noChange;
             else
                 return ChangeOfCourse.lower;
-
+        } catch (FeignException e) {
+            e.printStackTrace();
+            throw e;
         } catch (NullPointerException e) {
             return ChangeOfCourse.error;
         }
     }
 
-    public Map<String, Object>  getCurrencies() {
-        String token = System.getenv("openExchangeRatesToken");
+    public Map<String, Object> getCurrencies() {
         Map<String, Object> currencies = ratesClient.getCurrencies(token);
         return currencies;
     }
